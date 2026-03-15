@@ -6,8 +6,10 @@
 #include <map>
 #include <set>
 #include <cmath>
+#include <algorithm>
 
 #include "CMaze.hpp"
+#include "TPoint.hpp"
 
 CMaze::CMaze(const std::string &fileName)
     : m_width(0), m_height(0), m_start(0), m_end(0)
@@ -71,6 +73,34 @@ int CMaze::getHeuristic(NodeID current, NodeID target) const
     TPoint p1 = IDToPoint(current);
     TPoint p2 = IDToPoint(target);
     return std::abs(p1.x - p2.x) + std::abs(p1.y - p2.y);
+}
+
+void CMaze::draw(float x, float y, float width, float height, ColorHook getHook) const
+{
+    float cellW = width / (float)m_width;
+    float cellH = height / (float)m_height;
+
+    for(int iy = 0; iy < m_height; ++iy)
+    {
+        for(int ix = 0; ix < m_width; ++ix)
+        {
+            NodeID id = pointToID({ix, iy});
+
+            Color color;
+            if(m_grid[iy][ix] == 'X')
+            {
+                color = BLACK;
+            }
+            else
+            {
+                color = getHook(id);
+            }
+
+            Rectangle rect = { x + (ix * cellW), y + (iy * cellH), cellW, cellH };
+            DrawRectangleRec(rect, color);
+            DrawRectangleLinesEx(rect, 1, GRAY);
+        }
+    }
 }
 
 NodeID CMaze::pointToID(const TPoint &point) const

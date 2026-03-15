@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
 
-# --- Raylib ---
+# Raylib
 FetchContent_Declare(
   raylib
   GIT_REPOSITORY https://github.com/raysan5/raylib.git
@@ -15,7 +15,7 @@ FetchContent_Declare(
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(raylib)
 
-# --- Dear ImGui ---
+# Dear ImGui
 FetchContent_Declare(
   imgui
   GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -27,7 +27,7 @@ if(NOT imgui_POPULATED)
     FetchContent_Populate(imgui)
 endif()
 
-# --- rlImGui ---
+# rlImGui
 FetchContent_Declare(
   rlImGui
   GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
@@ -38,7 +38,7 @@ if(NOT rlimgui_POPULATED)
     FetchContent_Populate(rlImGui)
 endif()
 
-# --- Executable ---
+# Executable
 add_executable(${PROJECT_NAME} 
     src/main.cpp
     src/Algorithm.cpp
@@ -64,7 +64,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${rlimgui_SOURCE_DIR}
 )
 
-# Link everything. Raylib brings in most, but we need GL, X11 etc on Linux.
+# Link everything
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     raylib
     GL

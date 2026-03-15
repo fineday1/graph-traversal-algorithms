@@ -14,6 +14,8 @@ class CMaze : public ISearchable
 
         std::vector<NodeID> getNeighbors(NodeID node) const override;
         int getHeuristic(NodeID current, NodeID target) const override;
+
+        void draw(float x, float y, float width, float height, ColorHook getHook) const override;
         
         NodeID pointToID(const TPoint &point) const;
         TPoint IDToPoint(NodeID node) const;

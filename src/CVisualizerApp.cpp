@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 
 #include "CVisualizerApp.hpp"
 #include "CMaze.hpp"
@@ -39,6 +40,13 @@ bool CVisualizerApp::loadGraph(const std::string &filePath)
     }
 
     m_graph = std::make_unique<CMaze>(filePath);
+    
+    // Capture start/end for the visualizer state
+    if (auto* maze = dynamic_cast<CMaze*>(m_graph.get())) {
+        m_startNode = maze->getStart();
+        m_endNode = maze->getEnd();
+    }
+
     return true;
 }
 
@@ -88,14 +96,6 @@ void CVisualizerApp::executeSearch(IFrontier *frontier)
 
     m_isRunning = true;
 
-    NodeID start = 0;
-    NodeID end = 0;
-    auto* maze = dynamic_cast<CMaze*>(m_graph.get());
-    if (maze) {
-        start = maze->getStart();
-        end = maze->getEnd();
-    }
-
     onVisit hook = [this](NodeID node) {
         if (m_shouldStop) return;
 
@@ -107,12 +107,12 @@ void CVisualizerApp::executeSearch(IFrontier *frontier)
         std::this_thread::sleep_for(std::chrono::milliseconds(m_sleepMs.load()));
     };
 
-    auto parents = genericSearch(*m_graph, start, end, *frontier, hook);
+    auto parents = genericSearch(*m_graph, m_startNode, m_endNode, *frontier, hook);
 
     {
         std::lock_guard<std::mutex> lock(m_stateMutex);
         m_parents = parents;
-        m_path = reconstructPath(m_parents, start, end);
+        m_path = reconstructPath(m_parents, m_startNode, m_endNode);
     }
 
     m_isRunning = false;
@@ -157,32 +157,19 @@ void CVisualizerApp::renderUI()
 
 void CVisualizerApp::renderContent()
 {
-    auto *maze = dynamic_cast<CMaze*>(m_graph.get());
-    if(!maze) return;
-    const auto &grid = maze->getGrid();
+    if(!m_graph) return;
 
-    float screenW = (float)GetScreenWidth();
-    float screenH = (float)GetScreenHeight();
-    float cellW = screenW / grid[0].size();
-    float cellH = screenH / grid.size();
-
-    std::lock_guard<std::mutex> lock(m_stateMutex);
-
-    for(int y = 0; y < (int)grid.size(); ++y)
+    auto getColor = [this](NodeID id) -> Color
     {
-        for(int x = 0; x < (int)grid[y].size(); ++x)
-        {
-            NodeID id = maze->pointToID({x, y});
+        std::lock_guard<std::mutex> lock(m_stateMutex);
 
-            Color color = WHITE;
-            if(grid[y][x] == 'X') color = BLACK;
-            else if(id == maze->getStart()) color = GREEN;
-            else if(id == maze->getEnd()) color = RED;
-            else if(std::find(m_path.begin(), m_path.end(), id) != m_path.end()) color = BLUE;
-            else if(m_visited.count(id)) color = YELLOW;
+        if(id == m_startNode) return GREEN;
+        if(id == m_endNode) return RED;
+        if(std::find(m_path.begin(), m_path.end(), id) != m_path.end()) return BLUE;
+        if(m_visited.count(id)) return YELLOW;
 
-            DrawRectangleV({x * cellW, y * cellH}, {cellW, cellH}, color);
-            DrawRectangleLinesEx({x * cellW, y * cellH, cellW, cellH}, 1, GRAY);
-        }
-    }
+        return WHITE;
+    };
+
+    m_graph->draw(0, 0, (float)GetScreenWidth(), (float)GetScreenHeight(), getColor);
 }

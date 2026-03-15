@@ -39,6 +39,9 @@ class CVisualizerApp
         std::atomic<bool> m_shouldStop{false};
         std::atomic<int> m_sleepMs{50};
 
+        NodeID m_startNode = 0;
+        NodeID m_endNode = 0;
+
         void executeSearch(IFrontier *frontier);
 
         void renderUI();
