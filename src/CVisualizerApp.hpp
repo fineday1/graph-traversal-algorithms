@@ -37,10 +37,21 @@ class CVisualizerApp
         std::thread m_worker;
         std::atomic<bool> m_isRunning{false};
         std::atomic<bool> m_shouldStop{false};
-        std::atomic<int> m_sleepMs{50};
+        std::atomic<int> m_sleepMs{500};
 
         NodeID m_startNode = 0;
         NodeID m_endNode = 0;
+
+        struct TEdge
+        {
+            NodeID u, v;
+            bool operator==(const TEdge& other) const { return u == other.u && v == other.v; }
+        };
+
+        std::vector<TEdge> m_visitedEdges;
+        std::atomic<NodeID> m_activeParent{-1};
+        std::atomic<NodeID> m_activeCurrent{-1};
+        std::atomic<float> m_edgeProgress{0.0f};
 
         void executeSearch(IFrontier *frontier);
 

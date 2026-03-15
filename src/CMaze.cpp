@@ -75,7 +75,7 @@ int CMaze::getHeuristic(NodeID current, NodeID target) const
     return std::abs(p1.x - p2.x) + std::abs(p1.y - p2.y);
 }
 
-void CMaze::draw(float x, float y, float width, float height, ColorHook getHook) const
+void CMaze::draw(float x, float y, float width, float height, ColorHook getHook, EdgeHook getEdge) const
 {
     float cellW = width / (float)m_width;
     float cellH = height / (float)m_height;

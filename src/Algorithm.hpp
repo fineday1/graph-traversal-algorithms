@@ -8,7 +8,7 @@
 #include "ISearchable.hpp"
 #include "IFrontier.hpp"
 
-using onVisit = std::function<void(NodeID)>;
+using onVisit = std::function<void(NodeID parent, NodeID current)>;
 
 std::unordered_map<NodeID, NodeID> genericSearch(const ISearchable &graph,
                                              NodeID start, 

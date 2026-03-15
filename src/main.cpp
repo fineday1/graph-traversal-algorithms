@@ -11,7 +11,7 @@ int main()
         return -1;
     }
 
-    if(!app.loadGraph("maze.txt"))
+    if (!app.loadGraph("test.graph"))
     {
         std::cerr << "Failed to load initial graph" << std::endl;
     }

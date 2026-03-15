@@ -1,5 +1,5 @@
-#ifndef MAZE_HPP
-#define MAZE_HPP
+#ifndef CMAZE_HPP
+#define CMAZE_HPP
 
 #include <string>
 #include <vector>
@@ -15,7 +15,7 @@ class CMaze : public ISearchable
         std::vector<NodeID> getNeighbors(NodeID node) const override;
         int getHeuristic(NodeID current, NodeID target) const override;
 
-        void draw(float x, float y, float width, float height, ColorHook getHook) const override;
+        void draw(float x, float y, float width, float height, ColorHook getHook, EdgeHook getEdge) const override;
         
         NodeID pointToID(const TPoint &point) const;
         TPoint IDToPoint(NodeID node) const;

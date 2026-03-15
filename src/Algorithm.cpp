@@ -18,10 +18,11 @@ std::unordered_map<NodeID, NodeID> genericSearch(const ISearchable &graph, NodeI
     while(!frontier.empty())
     {
         NodeID curr = frontier.pop();
+        NodeID parent = (parents.count(curr)) ? parents.at(curr) : -1;
 
         if(callback)
         {
-            callback(curr);
+            callback(parent, curr);
         }
         
         if(graph.isTarget(curr, end)) break;

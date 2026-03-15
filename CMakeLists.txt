@@ -43,6 +43,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/Algorithm.cpp
     src/CMaze.cpp
+    src/CGraph.cpp
+    src/CGraph.hpp
     src/CVisualizerApp.cpp
     src/CVisualizerApp.hpp
     
