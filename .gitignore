@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+bin/
+obj/
+
+# Executables
+GraphTraversalVisualizer
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.user
+
+# Local configuration/state
+imgui.ini
+SUMMARY.md

@@ -1,11 +1,12 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+
 #include "ISearchable.hpp"
 #include "IFrontier.hpp"
 #include "Algorithm.hpp"
 
-void genericSearch(const ISearchable &graph, NodeID start, NodeID end, IFrontier &frontier)
+std::unordered_map<NodeID, NodeID> genericSearch(const ISearchable &graph, NodeID start, NodeID end, IFrontier &frontier, onVisit callback)
 {
     std::unordered_set<NodeID> visited;
     std::unordered_map<NodeID, NodeID> parents;
@@ -17,6 +18,11 @@ void genericSearch(const ISearchable &graph, NodeID start, NodeID end, IFrontier
     while(!frontier.empty())
     {
         NodeID curr = frontier.pop();
+
+        if(callback)
+        {
+            callback(curr);
+        }
         
         if(graph.isTarget(curr, end)) break;
 
@@ -32,6 +38,7 @@ void genericSearch(const ISearchable &graph, NodeID start, NodeID end, IFrontier
             }
         }
     }
+    return parents;
 }
 
 std::vector<NodeID> reconstructPath(const std::unordered_map<NodeID, NodeID> &parents, NodeID start, NodeID end)

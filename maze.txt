@@ -1,0 +1,8 @@
+XXXXXXXX
+X......X
+X.X..X.X
+X......X
+XXXX...X
+XXXXXXXX
+start 1, 1
+end 6, 4
