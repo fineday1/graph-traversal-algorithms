@@ -86,6 +86,10 @@ void CVisualizerApp::run()
 {
     while(!WindowShouldClose())
     {
+        float deltaTime = GetFrameTime();
+        
+        if(m_graph) m_graph->update(deltaTime);
+
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
@@ -181,7 +185,7 @@ void CVisualizerApp::renderUI()
 
     if(ImGui::Button("Reset"))
     {
-        loadGraph("test.graph");
+        loadGraph("demo-graphs/test2.graph");
     }
 
     ImGui::End();

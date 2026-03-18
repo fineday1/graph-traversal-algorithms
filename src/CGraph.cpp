@@ -87,7 +87,16 @@ int CGraph::getHeuristic(NodeID current, NodeID target) const
 void CGraph::draw(float x, float y, float width, float height, ColorHook getHook, EdgeHook getEdge) const
 {
     Vector2 center = { x + width / 2.0f, y + height / 2.0f };
-    float scale = (width < height ? width : height) * 0.4f;
+
+    float maxDist = 0.01f;
+    for(const auto& [id, pos] : m_nodePositions)
+    {
+        float d = Vector2Length(pos);
+        if(d > maxDist) maxDist = d;
+    }
+
+    float minDim = (width < height ? width : height);
+    float scale = (minDim / 2.0f) / maxDist * 0.85f;
 
     auto toScreen = [center, scale](Vector2 norm) -> Vector2
     {
@@ -133,6 +142,61 @@ void CGraph::draw(float x, float y, float width, float height, ColorHook getHook
         std::string label = std::to_string(id);
         int textW = MeasureText(label.c_str(), 10);
         DrawText(label.c_str(), (int)pos.x - textW / 2, (int)pos.y - 5, 10, DARKGRAY);
+    }
+}
+
+void CGraph::update(float deltaTime)
+{
+    // Repulsion
+    for(auto it1 = m_nodePositions.begin(); it1 != m_nodePositions.end(); ++it1)
+    {
+        for(auto it2 = std::next(it1); it2 != m_nodePositions.end(); ++it2)
+        {
+            NodeID id1 = it1->first;
+            NodeID id2 = it2->first;
+            Vector2 pos1 = it1->second;
+            Vector2 pos2 = it2->second;
+
+            Vector2 diff = Vector2Subtract(pos1, pos2);
+            float dist = Vector2Length(diff);
+            if (dist < 0.01f) dist = 0.01f;
+
+            float forceMag = (RepulsionStrength / (dist * dist)) * deltaTime;
+            Vector2 forceVec = Vector2Scale(Vector2Normalize(diff), forceMag);
+
+            m_velocities[id1] = Vector2Add(m_velocities[id1], forceVec);
+            m_velocities[id2] = Vector2Subtract(m_velocities[id2], forceVec);
+        }
+    }
+
+    // Attraction
+    for(const auto& [u, neighbors] : m_adjList)
+    {
+        for(NodeID v : neighbors)
+        {
+            if(u > v) continue;
+
+            Vector2 posU = m_nodePositions[u];
+            Vector2 posV = m_nodePositions[v];
+
+            Vector2 diff = Vector2Subtract(posV, posU);
+            float dist = Vector2Length(diff);
+            if(dist < 0.01f) continue;
+
+            float springF = (dist - DesiredLength) * SpringStrength;
+            Vector2 forceVec = Vector2Scale(diff, (springF / dist) * deltaTime);
+
+            m_velocities[u] = Vector2Add(m_velocities[u], forceVec);
+            m_velocities[v] = Vector2Subtract(m_velocities[v], forceVec);
+        }
+    }
+
+    // Integration, Damping, Central Gravity
+    for(auto& [id, pos] : m_nodePositions)
+    {
+        m_velocities[id] = Vector2Subtract(m_velocities[id], Vector2Scale(pos, GravityStrength * deltaTime));
+        pos = Vector2Add(pos, Vector2Scale(m_velocities[id], deltaTime));
+        m_velocities[id] = Vector2Scale(m_velocities[id], 0.9f);
     }
 }
 
