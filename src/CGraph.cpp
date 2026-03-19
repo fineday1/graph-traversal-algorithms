@@ -24,43 +24,62 @@ CGraph::CGraph(const std::string &fileName)
 
     std::string line;
     std::set<int> allNodes;
-    NodeID start = 0, end = 0;
+    NodeID startID = 0, endID = 0;
+    
+    std::vector<std::pair<NodeID, NodeID>> tempEdges;
+
     while(std::getline(file, line))
     {
         if(line.empty() || line[0] == '#') continue;
         else if(line.find("start") != std::string::npos)
         {
-            std::sscanf(line.c_str(), "start %d", &start);
+            std::sscanf(line.c_str(), "start %d", &startID);
         }
         else if(line.find("end") != std::string::npos)
         {
-            std::sscanf(line.c_str(), "end %d", &end);
+            std::sscanf(line.c_str(), "end %d", &endID);
         }
-
-        size_t colonPos = line.find(':');
-        if(colonPos == std::string::npos) continue;
-
-        int source = std::stoi(line.substr(0, colonPos));
-        std::stringstream ss(line.substr(colonPos + 1));
-        int neighbor;
-        while(ss >> neighbor)
+        else
         {
-            m_adjList[source].push_back(neighbor);
+            size_t colonPos = line.find(':');
+            if(colonPos == std::string::npos) continue;
+
+            NodeID source = std::stoi(line.substr(0, colonPos));
+            std::stringstream ss(line.substr(colonPos + 1));
+            NodeID neighbor;
             allNodes.insert(source);
-            allNodes.insert(neighbor);
+            while(ss >> neighbor)
+            {
+                m_adjList[source].push_back(neighbor);
+                tempEdges.push_back({source, neighbor});
+                allNodes.insert(neighbor);
+            }
         }
     }
 
-    m_start = start;
-    m_end = end;
+    m_start = startID;
+    m_end = endID;
 
-    int i = 0;
-    int n = allNodes.size();
-    for(int node : allNodes)
+    int index = 0;
+    int totalNodes = allNodes.size();
+    for(NodeID id : allNodes)
     {
-        float angle = (float)i * (2.0f * PI / (float)n);
-        m_nodePositions[node] = { cosf(angle), sinf(angle) };
-        i++;
+        m_nodeIDs.push_back(id);
+        m_idToIndex[id] = index;
+        
+        float angle = (float)index * (2.0f * PI / (float)totalNodes);
+        m_positions.push_back({ cosf(angle), sinf(angle) });
+        m_velocities.push_back({ 0, 0 });
+        
+        index++;
+    }
+
+    for(const auto& edge : tempEdges)
+    {
+        if(edge.first < edge.second)
+        {
+            m_edges.push_back({ m_idToIndex[edge.first], m_idToIndex[edge.second] });
+        }
     }
 }
 
@@ -75,10 +94,10 @@ std::vector<NodeID> CGraph::getNeighbors(NodeID node) const
 
 int CGraph::getHeuristic(NodeID current, NodeID target) const
 {
-    if (m_nodePositions.count(current) && m_nodePositions.count(target))
+    if(m_idToIndex.count(current) && m_idToIndex.count(target))
     {
-        Vector2 p1 = m_nodePositions.at(current);
-        Vector2 p2 = m_nodePositions.at(target);
+        Vector2 p1 = m_positions[m_idToIndex.at(current)];
+        Vector2 p2 = m_positions[m_idToIndex.at(target)];
         return (int)(Vector2Distance(p1, p2) * 100.0f);
     }
     return 0;
@@ -89,7 +108,7 @@ void CGraph::draw(float x, float y, float width, float height, ColorHook getHook
     Vector2 center = { x + width / 2.0f, y + height / 2.0f };
 
     float maxDist = 0.01f;
-    for(const auto& [id, pos] : m_nodePositions)
+    for(const auto& pos : m_positions)
     {
         float d = Vector2Length(pos);
         if(d > maxDist) maxDist = d;
@@ -103,36 +122,25 @@ void CGraph::draw(float x, float y, float width, float height, ColorHook getHook
         return { center.x + norm.x * scale, center.y + norm.y * scale };
     };
 
-    // Draw lines
-    for(const auto &[source, neighbors] : m_adjList)
+    for(const auto& edge : m_edges)
     {
-        if (m_nodePositions.count(source))
+        Vector2 p1 = toScreen(m_positions[edge.u]);
+        Vector2 p2 = toScreen(m_positions[edge.v]);
+
+        DrawLineEx(p1, p2, 1.0f, BLACK);
+
+        TEdgeState state = getEdge(m_nodeIDs[edge.u], m_nodeIDs[edge.v]);
+        if(state.progress > 0.0f) 
         {
-            Vector2 p1 = toScreen(m_nodePositions.at(source));
-            for(NodeID target : neighbors)
-            {
-                if (m_nodePositions.count(target))
-                {
-                    Vector2 p2 = toScreen(m_nodePositions.at(target));
-
-                    // Draw base line
-                    DrawLineEx(p1, p2, 1.0f, BLACK);
-
-                    TEdgeState state = getEdge(source, target);
-                    if(state.progress > 0.0f) 
-                    {
-                        Vector2 pAnimated = Vector2Lerp(p1, p2, state.progress);
-                        DrawLineEx(p1, pAnimated, 3.0f, state.color);
-                    }
-                }
-            }
+            Vector2 pAnimated = Vector2Lerp(p1, p2, state.progress);
+            DrawLineEx(p1, pAnimated, 3.0f, state.color);
         }
     }
 
-    // Draw nodes
-    for(const auto &[id, normPos] : m_nodePositions)
+    for(size_t i = 0; i < m_positions.size(); ++i)
     {
-        Vector2 pos = toScreen(normPos);
+        Vector2 pos = toScreen(m_positions[i]);
+        NodeID id = m_nodeIDs[i];
 
         Color nodeColor = getHook(id);
 
@@ -147,56 +155,42 @@ void CGraph::draw(float x, float y, float width, float height, ColorHook getHook
 
 void CGraph::update(float deltaTime)
 {
-    // Repulsion
-    for(auto it1 = m_nodePositions.begin(); it1 != m_nodePositions.end(); ++it1)
+    int n = (int)m_positions.size();
+
+    for(int i = 0; i < n; ++i)
     {
-        for(auto it2 = std::next(it1); it2 != m_nodePositions.end(); ++it2)
+        for(int j = i + 1; j < n; ++j)
         {
-            NodeID id1 = it1->first;
-            NodeID id2 = it2->first;
-            Vector2 pos1 = it1->second;
-            Vector2 pos2 = it2->second;
+            Vector2 diff = Vector2Subtract(m_positions[i], m_positions[j]);
+            float distSq = Vector2LengthSqr(diff);
+            if(distSq < 0.0001f) continue;
 
-            Vector2 diff = Vector2Subtract(pos1, pos2);
-            float dist = Vector2Length(diff);
-            if (dist < 0.01f) dist = 0.01f;
-
-            float forceMag = (RepulsionStrength / (dist * dist)) * deltaTime;
+            float forceMag = (RepulsionStrength / distSq) * deltaTime;
             Vector2 forceVec = Vector2Scale(Vector2Normalize(diff), forceMag);
 
-            m_velocities[id1] = Vector2Add(m_velocities[id1], forceVec);
-            m_velocities[id2] = Vector2Subtract(m_velocities[id2], forceVec);
+            m_velocities[i] = Vector2Add(m_velocities[i], forceVec);
+            m_velocities[j] = Vector2Subtract(m_velocities[j], forceVec);
         }
     }
 
-    // Attraction
-    for(const auto& [u, neighbors] : m_adjList)
+    for(const auto& edge : m_edges)
     {
-        for(NodeID v : neighbors)
-        {
-            if(u > v) continue;
+        Vector2 diff = Vector2Subtract(m_positions[edge.v], m_positions[edge.u]);
+        float dist = Vector2Length(diff);
+        if(dist < 0.01f) continue;
 
-            Vector2 posU = m_nodePositions[u];
-            Vector2 posV = m_nodePositions[v];
+        float springF = (dist - DesiredLength) * SpringStrength;
+        Vector2 forceVec = Vector2Scale(diff, (springF / dist) * deltaTime);
 
-            Vector2 diff = Vector2Subtract(posV, posU);
-            float dist = Vector2Length(diff);
-            if(dist < 0.01f) continue;
-
-            float springF = (dist - DesiredLength) * SpringStrength;
-            Vector2 forceVec = Vector2Scale(diff, (springF / dist) * deltaTime);
-
-            m_velocities[u] = Vector2Add(m_velocities[u], forceVec);
-            m_velocities[v] = Vector2Subtract(m_velocities[v], forceVec);
-        }
+        m_velocities[edge.u] = Vector2Add(m_velocities[edge.u], forceVec);
+        m_velocities[edge.v] = Vector2Subtract(m_velocities[edge.v], forceVec);
     }
 
-    // Integration, Damping, Central Gravity
-    for(auto& [id, pos] : m_nodePositions)
+    for(int i = 0; i < n; ++i)
     {
-        m_velocities[id] = Vector2Subtract(m_velocities[id], Vector2Scale(pos, GravityStrength * deltaTime));
-        pos = Vector2Add(pos, Vector2Scale(m_velocities[id], deltaTime));
-        m_velocities[id] = Vector2Scale(m_velocities[id], 0.9f);
+        m_velocities[i] = Vector2Subtract(m_velocities[i], Vector2Scale(m_positions[i], GravityStrength * deltaTime));
+        m_positions[i] = Vector2Add(m_positions[i], Vector2Scale(m_velocities[i], deltaTime));
+        m_velocities[i] = Vector2Scale(m_velocities[i], 0.9f);
     }
 }
 

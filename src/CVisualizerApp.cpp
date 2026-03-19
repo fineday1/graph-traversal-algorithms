@@ -89,7 +89,15 @@ void CVisualizerApp::run()
     {
         float deltaTime = GetFrameTime();
         
-        if(m_graph) m_graph->update(deltaTime);
+        if(m_graph)
+        {
+            const int subSteps = 10;
+            float subDelta = deltaTime / (float)subSteps;
+            for(int i = 0; i < subSteps; ++i)
+            {
+                m_graph->update(subDelta);
+            }
+        }
 
         BeginDrawing();
         ClearBackground(DARKGRAY);

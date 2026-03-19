@@ -17,23 +17,28 @@ class CGraph : public ISearchable
         int getHeuristic(NodeID current, NodeID target) const override;
 
         void draw(float x, float y, float width, float height, ColorHook getHook, EdgeHook getEdge) const override;
-        void update(float deltaTime);
+        void update(float deltaTime) override;
 
         NodeID getStart() const override;
-        NodeID getEnd() const;
+        NodeID getEnd() const override;
     private:
         std::unordered_map<NodeID, std::vector<NodeID>> m_adjList;
-        std::unordered_map<NodeID, Vector2> m_nodePositions;
-        std::unordered_map<NodeID, Vector2> m_velocities;
+
+        std::vector<Vector2> m_positions;
+        std::vector<Vector2> m_velocities;
         std::vector<NodeID> m_nodeIDs;
+        std::unordered_map<NodeID, int> m_idToIndex;
+
+        struct TEdgeIdx { int u, v; };
+        std::vector<TEdgeIdx> m_edges;
 
         NodeID m_start;
         NodeID m_end;
 
         const float RepulsionStrength = 10.0f;
-        const float SpringStrength = 5.0f;
+        const float SpringStrength = 15.0f;
         const float DesiredLength = 0.5f;
-        const float GravityStrength = 0.75f;
+        const float GravityStrength = 1.5f;
 };
 
 #endif
