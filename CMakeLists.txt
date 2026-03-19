@@ -47,6 +47,7 @@ add_executable(${PROJECT_NAME}
     src/CGraph.hpp
     src/CVisualizerApp.cpp
     src/CVisualizerApp.hpp
+    src/CRandomFrontier.hpp
     
     # ImGui sources
     ${imgui_SOURCE_DIR}/imgui.cpp

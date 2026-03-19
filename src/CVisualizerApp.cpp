@@ -10,6 +10,7 @@
 #include "CQueueFrontier.hpp"
 #include "CStackFrontier.hpp"
 #include "CPriorityFrontier.hpp"
+#include "CRandomFrontier.hpp"
 
 CVisualizerApp::CVisualizerApp()
     : m_isRunning(false), m_shouldStop(false), m_sleepMs(500) {}
@@ -161,7 +162,7 @@ void CVisualizerApp::renderUI()
     ImGui::Begin("Controls");
 
     static int currentAlgo = 0;
-    ImGui::Combo("Algorithm", &currentAlgo, "BFS\0DFS\0A*\0");
+    ImGui::Combo("Algorithm", &currentAlgo, "BFS\0DFS\0A*\0Random\0");
 
     int speed = m_sleepMs.load();
     if(ImGui::SliderInt("Speed", &speed, 1, 1000))
@@ -174,11 +175,13 @@ void CVisualizerApp::renderUI()
         static CQueueFrontier bfs;
         static CStackFrontier dfs;
         static CPriorityFrontier aStar;
+        static CRandomFrontier random;
 
         IFrontier *selected = nullptr;
         if(currentAlgo == 0) selected = &bfs;
         else if(currentAlgo == 1) selected = &dfs;
-        else selected = &aStar;
+        else if(currentAlgo == 2) selected = &aStar;
+        else selected = &random;
 
         startSearch(selected);
     }
