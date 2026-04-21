@@ -13,7 +13,7 @@
 #include "raymath.h"
 
 CGraph::CGraph(const std::string &fileName)
-    : m_start(0), m_end(0)
+    : m_start(0), m_end(0), m_temperature(1.0f)
 {
     std::ifstream file(fileName);
     if(!file.is_open())
@@ -68,7 +68,10 @@ CGraph::CGraph(const std::string &fileName)
         m_idToIndex[id] = index;
         
         float angle = (float)index * (2.0f * PI / (float)totalNodes);
-        m_positions.push_back({ cosf(angle), sinf(angle) });
+        float noiseX = ((float)rand()/(float)RAND_MAX - 0.5f) * 0.1f;
+        float noiseY = ((float)rand()/(float)RAND_MAX - 0.5f) * 0.1f;
+        
+        m_positions.push_back({ cosf(angle) + noiseX, sinf(angle) + noiseY });
         m_velocities.push_back({ 0, 0 });
         
         index++;
@@ -155,6 +158,8 @@ void CGraph::draw(float x, float y, float width, float height, ColorHook getHook
 
 void CGraph::update(float deltaTime)
 {
+    if(m_temperature <= 0.0f) return;
+
     int n = (int)m_positions.size();
 
     for(int i = 0; i < n; ++i)
@@ -163,9 +168,8 @@ void CGraph::update(float deltaTime)
         {
             Vector2 diff = Vector2Subtract(m_positions[i], m_positions[j]);
             float distSq = Vector2LengthSqr(diff);
-            if(distSq < 0.0001f) continue;
-
-            float forceMag = (RepulsionStrength / distSq) * deltaTime;
+            
+            float forceMag = (RepulsionStrength / (distSq + 0.1f)) * deltaTime;
             Vector2 forceVec = Vector2Scale(Vector2Normalize(diff), forceMag);
 
             m_velocities[i] = Vector2Add(m_velocities[i], forceVec);
@@ -186,12 +190,22 @@ void CGraph::update(float deltaTime)
         m_velocities[edge.v] = Vector2Subtract(m_velocities[edge.v], forceVec);
     }
 
+    float damping = 0.95f + (m_temperature * 0.15f); 
+
     for(int i = 0; i < n; ++i)
     {
         m_velocities[i] = Vector2Subtract(m_velocities[i], Vector2Scale(m_positions[i], GravityStrength * deltaTime));
-        m_positions[i] = Vector2Add(m_positions[i], Vector2Scale(m_velocities[i], deltaTime));
-        m_velocities[i] = Vector2Scale(m_velocities[i], 0.9f);
+        
+        float speed = Vector2Length(m_velocities[i]);
+        if (speed > 10.0f) m_velocities[i] = Vector2Scale(Vector2Normalize(m_velocities[i]), 10.0f);
+
+        m_positions[i] = Vector2Add(m_positions[i], Vector2Scale(m_velocities[i], deltaTime * m_temperature));
+        
+        m_velocities[i] = Vector2Scale(m_velocities[i], damping);
     }
+
+    m_temperature *= 0.992f;
+    if(m_temperature < 0.01f) m_temperature = 0.0f;
 }
 
 NodeID CGraph::getStart() const { return m_start; }

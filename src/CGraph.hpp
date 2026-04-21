@@ -39,6 +39,8 @@ class CGraph : public ISearchable
         const float SpringStrength = 15.0f;
         const float DesiredLength = 0.5f;
         const float GravityStrength = 1.5f;
+
+        float m_temperature = 1.0f;
 };
 
 #endif
