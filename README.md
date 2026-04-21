@@ -2,6 +2,14 @@
 
 A modular C++ application for visualizing pathfinding and graph traversal algorithms.
 
+## Demos
+
+### Graph Traversal
+![Graph Traversal Demo](demo/demo-graph.gif)
+
+### Maze Traversal
+![Maze Traversal Demo](demo/demo-maze.gif)
+
 ## Features
 - Multi-threaded search execution for real-time UI animation.
 - Support for grid-based mazes and general adjacency list graphs.

@@ -11,7 +11,7 @@ int main()
         return -1;
     }
 
-    if (!app.loadGraph("demo-graphs/test2.graph"))
+    if (!app.loadGraph("demo-graphs/test2.maze"))
     {
         std::cerr << "Failed to load initial graph" << std::endl;
     }

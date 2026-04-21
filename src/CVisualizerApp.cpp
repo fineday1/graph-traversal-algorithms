@@ -188,7 +188,7 @@ void CVisualizerApp::renderUI()
 
     if(ImGui::Button("Reset"))
     {
-        loadGraph("demo-graphs/test2.graph");
+        loadGraph("demo-graphs/test2.maze");
     }
 
     ImGui::End();

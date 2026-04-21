@@ -28,6 +28,14 @@ CMaze::CMaze(const std::string &fileName)
     while(std::getline(file, line))
     {
         if(line.empty()) continue;
+
+        while(!line.empty() && (line.back() == '\r' || line.back() == '\n' || line.back() == ' '))
+        {
+            line.pop_back();
+        }
+
+        if(line.empty()) continue;
+
         if(line.find("start") != std::string::npos)
         {
             std::sscanf(line.c_str(), "start %d, %d", &start.x, &start.y);
