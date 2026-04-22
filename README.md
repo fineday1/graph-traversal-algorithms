@@ -2,7 +2,7 @@
 
 A modular C++ application for visualizing pathfinding and graph traversal algorithms.
 
-## Demos
+## Demo
 
 ### Graph Traversal
 ![Graph Traversal Demo](demo/demo-graph.gif)
@@ -11,18 +11,9 @@ A modular C++ application for visualizing pathfinding and graph traversal algori
 ![Maze Traversal Demo](demo/demo-maze.gif)
 
 ## Features
-- Multi-threaded search execution for real-time UI animation.
 - Support for grid-based mazes and general adjacency list graphs.
-- Smooth edge-filling animations during node discovery.
-- Path reconstruction and highlighting.
 - Interactive control panel for algorithm selection and speed control.
-
-## Architecture
-- Strategy Pattern: Algorithm logic decoupled from frontier data structures.
-- Observer Pattern: Lambda hooks for thread-safe state reporting and rendering.
-- Modern C++: Utilization of RAII, smart pointers (unique_ptr), and atomics.
-- Thread Safety: State synchronization via std::mutex and std::lock_guard.
-- Generic Rendering: Graph-agnostic pipeline using delegated rendering hooks.
+- Path reconstruction and edge animations.
 
 ## Tech Stack
 - Graphics: Raylib
